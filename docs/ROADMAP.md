@@ -14,7 +14,7 @@ Every task's acceptance criterion implicitly includes the Definition of Done in 
 |---|---|---|---|---|---|---|
 | T0 | Repo + Next.js skeleton, `.env.example`, GitHub repo | CC | — | — | App builds; repo public on GitHub | done |
 | T1 | Agent contract: `AGENTS.md`, `CLAUDE.md`, `PRODUCT.md`, ROADMAP, ADRs | CC | T0 | — | Files merged on `main` | done |
-| T2 | Prisma schema draft (Place, PlaceTranslation, Source, PlaceSource); `/tr` `/en` routing skeleton; empty home | CC | T1 | — | `prisma validate` passes; `/` redirects to `/tr` or `/en`; `/xx` is 404 | todo |
+| T2 | Prisma schema draft (Place, PlaceTranslation, Source, PlaceSource); `/tr` `/en` routing skeleton; empty home | CC | T1 | — | `prisma validate` passes; `/` redirects to `/tr` or `/en`; `/xx` is 404 | done |
 
 ## Phase 1 — Foundations (from here on: branch + PR only)
 

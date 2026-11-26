@@ -1,0 +1,148 @@
+// Mardin Audio Guide — data model draft (ROADMAP T2). Not yet connected to a database (T3).
+// Decisions: docs/DECISIONS.md ADR-003 (translation table), ADR-004 (sources), ADR-005 (publish flow), ADR-009 (TTS).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// Lifecycle of a translation. Only the canonical translation is reviewed by a human;
+/// machine translations are created directly as PUBLISHED from published canonical text (ADR-005).
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+/// Who produced the text of a translation.
+enum ContentOrigin {
+  HUMAN // written or edited by a person
+  AI_RESEARCHED // canonical draft prepared by AI from sources — must be verified by the admin
+  MACHINE_TRANSLATED // AI translation of the published canonical text — shown with a label
+}
+
+enum SourceType {
+  BOOK
+  ARTICLE
+  WEBSITE
+  OFFICIAL_RECORD // e.g. ministry / municipality / foundation registry
+  INSCRIPTION // on-site inscription
+  INTERVIEW // oral history
+  OTHER
+}
+
+enum PlaceCategory {
+  MOSQUE
+  CHURCH
+  MONASTERY
+  MADRASA
+  MANSION
+  CARAVANSERAI
+  BATH
+  FORTIFICATION
+  MUSEUM
+  OTHER
+}
+
+/// A historic building. Holds only language-neutral data; texts live in PlaceTranslation.
+model Place {
+  id              String        @id @default(cuid())
+  /// Stable, URL-safe id used in QR codes (/p/{slug}). Never change after QR codes are printed (ADR-008).
+  slug            String        @unique
+  category        PlaceCategory @default(OTHER)
+  latitude        Decimal?      @db.Decimal(9, 6)
+  longitude       Decimal?      @db.Decimal(9, 6)
+  /// Approximate construction years for sorting/filtering; human-readable period text is PlaceTranslation.period.
+  builtYearFrom   Int?
+  builtYearTo     Int?
+  coverImageUrl   String?
+  /// Locale of the human-verified text that machine translations are generated from.
+  canonicalLocale String        @default("tr")
+
+  translations PlaceTranslation[]
+  sources      PlaceSource[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Localized text + audio for a Place. One row per (place, locale).
+model PlaceTranslation {
+  id      String @id @default(cuid())
+  placeId String
+  place   Place  @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  /// BCP-47 code ("tr", "en", ...). Validated in code against src/lib/i18n/config.ts, not a DB enum (ADR-003).
+  locale  String
+
+  title   String
+  /// Short teaser for cards and meta descriptions.
+  summary String?
+  /// Main story (Markdown).
+  body    String
+  /// Localized period text, e.g. "12. yüzyıl" / "12th century".
+  period  String?
+
+  status ContentStatus @default(DRAFT)
+  origin ContentOrigin @default(HUMAN)
+
+  /// Machine translations: hash of the canonical text they were generated from; mismatch => re-translate (ADR-005).
+  sourceTextHash String?
+
+  /// TTS audio stored in Vercel Blob. Regenerated only when audioTextHash != hash(current text) (ADR-009).
+  audioUrl        String?
+  audioTextHash   String?
+  audioDurationMs Int?
+  audioVoice      String? // provider + voice id, for traceability
+
+  publishedAt DateTime?
+  /// Admin who verified and published canonical text (email). Null for machine translations.
+  reviewedBy  String?
+  reviewedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([placeId, locale])
+  @@index([locale, status])
+}
+
+/// A reference that backs the historical content. Reusable across places (ADR-004).
+model Source {
+  id         String     @id @default(cuid())
+  type       SourceType @default(OTHER)
+  title      String
+  author     String?
+  publisher  String?
+  year       Int?
+  url        String?
+  /// When an online source was last checked by a human.
+  accessedAt DateTime?
+  notes      String?
+
+  places PlaceSource[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Citation: which source supports which place, optionally with page/section.
+/// Publishing a canonical translation requires >= 1 PlaceSource for its place (enforced in src/server/, ADR-005).
+model PlaceSource {
+  placeId  String
+  sourceId String
+  place    Place   @relation(fields: [placeId], references: [id], onDelete: Cascade)
+  source   Source  @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  /// e.g. "pp. 112–118" or "section 3.2"
+  locator  String?
+  note     String?
+
+  createdAt DateTime @default(now())
+
+  @@id([placeId, sourceId])
+  @@index([sourceId])
+}
