@@ -1,6 +1,8 @@
 # ROADMAP — Mardin Audio Guide
 
-Owners: **CC** = Claude Code · **CX** = Codex · **AG** = Antigravity.
+Owners: **CC** = Claude Code · **CX** = Codex · **AG** = Antigravity · **HU** = Human (Cabir).
+Agents never change Vercel, Neon or Blob settings (dashboard or CLI) — those are **HU** tasks; see
+[Human setup steps](#human-setup-steps-hu) at the end of this file.
 "Parallel with" lists tasks that can run at the same time without blocking each other.
 Status: `todo` · `doing` · `review` · `done`. Owners update only their own rows.
 
@@ -20,7 +22,8 @@ Every task's acceptance criterion implicitly includes the Definition of Done in 
 
 | ID | Task | Owner | Depends on | Parallel with | Acceptance criterion | Status |
 |---|---|---|---|---|---|---|
-| T3 | Neon dev DB connection, first migration, Prisma client singleton, read-only data layer (`getPublishedPlaces`, `getPlaceBySlug(locale)`) with typed DTOs | CC | T2 | T4, T5 | Migration applies on a Neon dev branch; data layer returns only `PUBLISHED` content; DTO types exported from `src/server/places/types.ts` | todo |
+| H1 | Create Neon project + `dev` branch; put `DATABASE_URL` / `DIRECT_URL` into each agent's `.env.local` | HU | T2 | T4, T5 | `npx prisma db pull` connects (empty DB is fine) in `../mag-claude` | todo |
+| T3 | Neon dev DB connection, first migration, Prisma client singleton, read-only data layer (`getPublishedPlaces`, `getPlaceBySlug(locale)`) with typed DTOs | CC | T2, H1 | T4, T5 | Migration applies on a Neon dev branch; data layer returns only `PUBLISHED` content; DTO types exported from `src/server/places/types.ts` | todo |
 | T4 | `DESIGN.md` (colours, type, spacing, Mardin-stone palette, dark mode, a11y contrast) + Tailwind tokens + base components (Button, Card, Badge incl. "Machine-translated", Layout shell, language switcher) | AG | T2 | T3, T5 | Components render on a `/[locale]/_styleguide` page; contrast AA | todo |
 | T5 | CI on GitHub Actions (install, lint, typecheck, test, build on every PR); Vitest setup with one sample test; real `npm run test` | CX | T2 | T3, T4 | CI runs and is green on a PR; branch protection recommendation documented in PR | todo |
 
@@ -47,7 +50,8 @@ Every task's acceptance criterion implicitly includes the Definition of Done in 
 
 | ID | Task | Owner | Depends on | Parallel with | Acceptance criterion | Status |
 |---|---|---|---|---|---|---|
-| T15 | TTS pipeline: provider-agnostic `TtsProvider` interface; compare ≥ 2 providers on Turkish quality (ADR); generate MP3 once per published translation, upload to Vercel Blob, store `audioUrl` + `audioTextHash`; regenerate only when text changes; admin "regenerate audio" button | CC | T13 | T16 | Re-publishing unchanged text makes zero TTS calls; audio plays from Blob URL | todo |
+| H2 | Create Vercel Blob store; put `BLOB_READ_WRITE_TOKEN` into `../mag-claude/.env.local` | HU | — | T13, T16 | Token present locally; store visible in the Vercel dashboard | todo |
+| T15 | TTS pipeline: provider-agnostic `TtsProvider` interface; compare ≥ 2 providers on Turkish quality (ADR); generate MP3 once per published translation, upload to Vercel Blob, store `audioUrl` + `audioTextHash`; regenerate only when text changes; admin "regenerate audio" button | CC | T13, H2 | T16 | Re-publishing unchanged text makes zero TTS calls; audio plays from Blob URL | todo |
 | T16 | Audio player component (play/pause, scrub, speed, remembers position, accessible) on place page | AG | T7 | T15 | Works with a static sample MP3; keyboard + screen-reader usable | todo |
 
 ## Phase 5 — Offline / PWA
@@ -68,7 +72,7 @@ Every task's acceptance criterion implicitly includes the Definition of Done in 
 
 | ID | Task | Owner | Depends on | Parallel with | Acceptance criterion | Status |
 |---|---|---|---|---|---|---|
-| T21 | Production setup: Vercel project linked to GitHub, Neon prod branch + Vercel integration, Blob store, env vars, GitHub OAuth app for prod URL, preview deployments per PR, `prisma migrate deploy` in build | CC | T19, T20 | — | Production URL live; preview deploy on every PR; no secrets in repo | todo |
+| T21 | Production setup: Vercel project linked to GitHub, Neon prod branch + Vercel integration, Blob store connected, env vars, GitHub OAuth app for prod URL, preview deployments per PR. (Repo side — `prisma migrate deploy` in the build script / `vercel.json` — is prepared by CC in a normal PR.) | HU | T19, T20 | — | Production URL live; preview deploy on every PR; no secrets in repo | todo |
 | T22 | Launch content: ≥ 10 places verified & published with audio; print QR sheet; smoke test on real phones in Mardin | CC + CX + owner | T21 | — | PRODUCT.md success criteria met | todo |
 
 ## Later (post-launch)
@@ -85,3 +89,37 @@ Every task's acceptance criterion implicitly includes the Definition of Done in 
 - **CC:** T3 (DB + data layer) — unblocks most of Phase 2.
 - **AG:** T4 (design system) — needs only the T2 skeleton.
 - **CX:** T5 (CI + Vitest) — needs only the T2 skeleton.
+- **HU:** H1 (Neon dev DB) — must be done before CC can finish T3.
+
+---
+
+## Human setup steps (HU)
+
+Short how-to for the tasks only the human does. Never paste a secret into a PR, issue, chat log or commit.
+
+### H1 — Neon dev database (before T3)
+1. Sign in at <https://console.neon.tech> → **New project** → name `mardin-audio-guide`,
+   region close to Vercel's (e.g. *AWS Europe (Frankfurt)*), default Postgres version.
+2. **Branches** → create a branch `dev` from `main` (`main` is kept for production, T21).
+3. On `dev` → **Connect** → copy the *pooled* string → `DATABASE_URL`; switch pooling off and copy again → `DIRECT_URL`.
+4. Paste both into `.env.local` in every worktree that needs the DB (at least `../mag-claude`, `../mag-codex`).
+5. Check: `npx prisma db pull` in `../mag-claude` connects without an auth error.
+
+### H2 — Vercel Blob store (before T15)
+1. <https://vercel.com> → **Storage** → **Create** → **Blob** → name `mardin-audio-guide-blob`.
+2. If the Vercel project already exists, connect the store to it (this adds `BLOB_READ_WRITE_TOKEN` to its env vars).
+3. Store → **.env.local** tab → copy `BLOB_READ_WRITE_TOKEN` into `../mag-claude/.env.local`.
+
+### T21 — Production on Vercel
+1. **Project:** Vercel → **Add New → Project** → import `kdemirwarehouse/mardin-audio-guide`; keep the Next.js
+   defaults. Production branch = `main`; preview deployments for PRs are on by default.
+2. **Database:** Vercel → **Storage / Marketplace** → **Neon** integration → link the existing Neon project,
+   `main` branch for Production; enable "branch per preview deployment" if offered.
+   `DATABASE_URL` and `DIRECT_URL` must exist for Production and Preview.
+3. **Blob:** connect the H2 store to the project (Storage tab → Connect).
+4. **GitHub OAuth (prod):** GitHub → Settings → Developer settings → **OAuth Apps → New** → homepage
+   `https://<prod-domain>`, callback `https://<prod-domain>/api/auth/callback/github`.
+5. **Env vars:** Project → Settings → **Environment Variables** → add every key from `.env.example`
+   (`AUTH_SECRET` from `npx auth secret`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, `ADMIN_EMAILS`,
+   `TRANSLATION_API_KEY`, `TTS_PROVIDER`, `TTS_API_KEY`, `NEXT_PUBLIC_SITE_URL` = prod URL).
+6. **Verify:** merge to `main` → build log shows `prisma migrate deploy`, site opens. Open any PR → a preview URL appears on it.

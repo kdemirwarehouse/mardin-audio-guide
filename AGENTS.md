@@ -46,12 +46,19 @@ description and let the owner do it. Owners may hand over a path by updating thi
 | **Claude Code** | `prisma/schema.prisma`, `prisma/migrations/`, `prisma.config.ts`, `src/app/api/`, `src/app/(admin)/`, `src/server/`, `src/lib/` (db, auth, i18n config, tts, translation, maps), `src/proxy.ts`, `next.config.ts`, `vercel.json`, `docs/DECISIONS.md`, `CLAUDE.md` |
 | **Codex** | `scripts/`, `prisma/seed/`, `data/` (content import files), `src/features/qr/`, `tests/`, `e2e/`, `.github/`, test configs (`vitest.config.*`, `playwright.config.*`) |
 | **Antigravity** | `DESIGN.md`, `src/components/`, `src/app/(site)/` pages and layouts (except the locale guard in `src/app/(site)/[locale]/layout.tsx`, which is shared), `src/features/map/`, `src/features/audio-player/`, `src/app/globals.css`, `public/` |
+| **Human (Cabir)** | Not files — external settings: the Vercel project (env vars, domains, integrations, deployments), the Neon console, Vercel Blob stores, GitHub OAuth apps and repo settings. Tasks: `H1`, `H2`, `T21` in `docs/ROADMAP.md` (how-to notes at its end) |
 | **Shared** (state the change in the PR description, keep it minimal) | `package.json`, `package-lock.json`, `AGENTS.md`, `PRODUCT.md`, `docs/ROADMAP.md`, `README.md`, `tsconfig.json`, `eslint.config.mjs`, `.gitignore`, `.gitattributes`, `.env.example` |
 
 Rules for shared files:
 - Dependency changes go in their own commit (`build(deps): add leaflet`). Before opening a PR, rebase on `main`;
   if `package-lock.json` conflicts, take `main`'s version and re-run `npm install` — never hand-edit the lockfile.
 - In `docs/ROADMAP.md`, only change the status of your own tasks.
+
+Rule for external services:
+- **Agents never change Vercel, Neon or Blob settings** — no dashboard actions, no `vercel env` / `vercel link` /
+  `vercel deploy` / `neonctl` commands. If a task needs a new env var, store or integration, add the key to
+  `.env.example` and write the exact step for the human in the PR description. Repo files such as `vercel.json`
+  stay with their owner above and change only through a reviewed PR.
 
 ## 5. Parallel work with git worktrees
 
