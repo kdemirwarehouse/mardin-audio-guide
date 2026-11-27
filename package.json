@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node -e \"console.log('No tests yet - test runner is added in ROADMAP T5 (Codex).')\"",
+    "test": "vitest run",
     "postinstall": "prisma generate",
     "db:validate": "prisma validate"
   },
@@ -28,7 +28,8 @@
     "eslint-config-next": "16.4.6",
     "prisma": "^7.10.1",
     "tailwindcss": "4.3.3",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.12"
   },
   "engines": {
     "node": ">=22"
