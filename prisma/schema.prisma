@@ -1,4 +1,4 @@
-// Mardin Audio Guide — data model draft (ROADMAP T2). Not yet connected to a database (T3).
+// Mardin Audio Guide — data model (ROADMAP T2). Connected to Neon in T3; schema changes go through `prisma migrate dev`.
 // Decisions: docs/DECISIONS.md ADR-003 (translation table), ADR-004 (sources), ADR-005 (publish flow), ADR-009 (TTS).
 
 generator client {
