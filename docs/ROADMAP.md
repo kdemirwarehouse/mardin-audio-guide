@@ -23,7 +23,7 @@ Every task's acceptance criterion implicitly includes the Definition of Done in 
 | ID | Task | Owner | Depends on | Parallel with | Acceptance criterion | Status |
 |---|---|---|---|---|---|---|
 | H1 | Create Neon project + `dev` branch; put `DATABASE_URL` / `DIRECT_URL` into each agent's `.env.local` | HU | T2 | T4, T5 | `npx prisma db pull` connects (empty DB is fine) in `../mag-claude` | todo |
-| T3 | Neon dev DB connection, first migration, Prisma client singleton, read-only data layer (`getPublishedPlaces`, `getPlaceBySlug(locale)`) with typed DTOs | CC | T2, H1 | T4, T5 | Migration applies on a Neon dev branch; data layer returns only `PUBLISHED` content; DTO types exported from `src/server/places/types.ts` | todo |
+| T3 | Neon dev DB connection, first migration, Prisma client singleton, read-only data layer (`getPublishedPlaces`, `getPlaceBySlug(locale)`) with typed DTOs | CC | T2, H1 | T4, T5 | Migration applies on a Neon dev branch; data layer returns only `PUBLISHED` content; DTO types exported from `src/server/places/types.ts` | review |
 | T4 | `DESIGN.md` (colours, type, spacing, Mardin-stone palette, dark mode, a11y contrast) + Tailwind tokens + base components (Button, Card, Badge incl. "Machine-translated", Layout shell, language switcher) | AG | T2 | T3, T5 | Components render on a `/[locale]/_styleguide` page; contrast AA | todo |
 | T5 | CI on GitHub Actions (install, lint, typecheck, test, build on every PR); Vitest setup with one sample test; real `npm run test` | CX | T2 | T3, T4 | CI runs and is green on a PR; branch protection recommendation documented in PR | todo |
 
