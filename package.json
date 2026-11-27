@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node -e \"console.log('No tests yet - test runner is added in ROADMAP T5 (Codex).')\"",
+    "test": "vitest run",
     "postinstall": "prisma generate",
     "db:validate": "prisma validate"
   },
